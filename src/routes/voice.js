@@ -5,11 +5,13 @@ const { sendBusinessEmail } = require('../services/emailService');
 
 const router = express.Router();
 
-router.post('/answer', async (req, res) => {
+router.all('/answer', async (req, res) => {
   try {
-    const to = req.body.to || req.query.to;
-    const from = req.body.from || req.query.from;
-    const uuid = req.body.uuid || req.query.uuid;
+    const payload = req.method === 'GET' ? req.query : req.body;
+
+    const to = payload.to;
+    const from = payload.from;
+    const uuid = payload.uuid;
 
     const business = await prisma.business.findFirst({
       where: {
@@ -31,7 +33,7 @@ router.post('/answer', async (req, res) => {
         callerNumber: from,
         calledNumber: to,
         status: 'diverted_to_recovery',
-        rawPayload: req.body
+        rawPayload: payload
       }
     });
 
@@ -82,10 +84,11 @@ router.post('/answer', async (req, res) => {
   }
 });
 
-router.post('/event', async (req, res) => {
+router.all('/event', async (req, res) => {
   try {
-    const uuid = req.body.uuid || req.query.uuid;
-    const status = req.body.status || req.query.status;
+    const payload = req.method === 'GET' ? req.query : req.body;
+    const uuid = payload.uuid;
+    const status = payload.status;
 
     await prisma.call.updateMany({
       where: { vonageUuid: uuid },
@@ -94,14 +97,14 @@ router.post('/event', async (req, res) => {
         endedAt: ['completed', 'failed', 'busy', 'timeout'].includes(status)
           ? new Date()
           : undefined,
-        rawPayload: req.body
+        rawPayload: payload
       }
     });
 
-    res.sendStatus(200);
+    return res.sendStatus(200);
   } catch (error) {
     console.error(error);
-    res.sendStatus(200);
+    return res.sendStatus(200);
   }
 });
 
