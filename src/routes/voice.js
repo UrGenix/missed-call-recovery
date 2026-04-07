@@ -9,9 +9,15 @@ router.all('/answer', async (req, res) => {
   try {
     const payload = req.method === 'GET' ? req.query : req.body;
 
-    const to = payload.to;
-    const from = payload.from;
+    const rawTo = payload.to || '';
+    const rawFrom = payload.from || '';
     const uuid = payload.uuid;
+
+    const to = String(rawTo).replace(/\D/g, '');
+    const from = String(rawFrom).replace(/\D/g, '');
+
+    console.log('VOICE ANSWER PAYLOAD:', payload);
+    console.log('NORMALISED TO:', to, 'FROM:', from);
 
     if (!to || !from) {
       return res.json([
@@ -30,6 +36,7 @@ router.all('/answer', async (req, res) => {
     });
 
     if (!business) {
+      console.log('NO BUSINESS FOUND FOR:', to);
       return res.json([
         { action: 'talk', text: 'This service is unavailable.' }
       ]);
