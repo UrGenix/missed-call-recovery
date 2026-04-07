@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id             String   @id @default(uuid())
+  name           String
+  publicNumber   String
+  recoveryNumber String   @unique
+  alertEmail     String
+  smsTemplate    String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  calls          Call[]
+  leads          Lead[]
+}
+
+model Call {
+  id           String    @id @default(uuid())
+  businessId   String
+  vonageUuid   String?
+  callerNumber String
+  calledNumber String?
+  status       String?
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  rawPayload   Json?
+
+  business     Business  @relation(fields: [businessId], references: [id])
+  lead         Lead?
+}
+
+model Lead {
+  id              String    @id @default(uuid())
+  businessId      String
+  callId          String?   @unique
+  callerNumber    String
+  firstSmsSentAt  DateTime?
+  inboundReply    String?
+  replyReceivedAt DateTime?
+  status          String    @default("new")
+  createdAt       DateTime  @default(now())
+
+  business        Business  @relation(fields: [businessId], references: [id])
+  call            Call?     @relation(fields: [callId], references: [id])
+}
+
+model MessageLog {
+  id         String   @id @default(uuid())
+  businessId String
+  leadId     String?
+  direction  String
+  fromNumber String?
+  toNumber   String?
+  body       String?
+  status     String?
+  rawPayload Json?
+  createdAt  DateTime @default(now())
+}
