@@ -9,24 +9,9 @@ router.all('/answer', async (req, res) => {
   try {
     const payload = req.method === 'GET' ? req.query : req.body;
 
-    const rawTo = payload.to || '';
-    const rawFrom = payload.from || '';
+    const to = payload.to;
+    const from = payload.from;
     const uuid = payload.uuid;
-
-    const to = String(rawTo).replace(/\D/g, '');
-    const from = String(rawFrom).replace(/\D/g, '');
-
-    console.log('VOICE ANSWER PAYLOAD:', payload);
-    console.log('NORMALISED TO:', to, 'FROM:', from);
-
-    if (!to || !from) {
-      return res.json([
-        {
-          action: 'talk',
-          text: 'Webhook is live.'
-        }
-      ]);
-    }
 
     const business = await prisma.business.findFirst({
       where: {
@@ -36,42 +21,29 @@ router.all('/answer', async (req, res) => {
     });
 
     if (!business) {
-      console.log('NO BUSINESS FOUND FOR:', to);
       return res.json([
         { action: 'talk', text: 'This service is unavailable.' }
       ]);
     }
 
-   let call = await prisma.call.findFirst({
-  where: { vonageUuid: uuid }
-});
+    const call = await prisma.call.create({
+      data: {
+        businessId: business.id,
+        vonageUuid: uuid,
+        callerNumber: from,
+        calledNumber: to,
+        status: 'diverted_to_recovery',
+        rawPayload: payload
+      }
+    });
 
-if (!call) {
-  call = await prisma.call.create({
-    data: {
-      businessId: business.id,
-      vonageUuid: uuid,
-      callerNumber: from,
-      calledNumber: to,
-      status: 'diverted_to_recovery',
-      rawPayload: payload
-    }
-  });
-}
-    let lead = await prisma.lead.findFirst({
-  where: { callId: call.id }
-});
-
-if (!lead) {
-  lead = await prisma.lead.create({
-    data: {
-      businessId: business.id,
-      callId: call.id,
-      callerNumber: from,
-      status: 'new'
-    }
-  });
-}
+    const lead = await prisma.lead.create({
+      data: {
+        businessId: business.id,
+        callId: call.id,
+        callerNumber: from,
+        status: 'new'
+      }
     });
 
     await sendRecoverySms({
@@ -105,8 +77,10 @@ if (!lead) {
       }
     ]);
   } catch (error) {
-    console.error('VOICE EVENT ERROR:', error);
-    return res.sendStatus(200);
+    console.error(error);
+    return res.json([
+      { action: 'talk', text: 'Sorry, something went wrong.' }
+    ]);
   }
 });
 
