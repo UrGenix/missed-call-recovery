@@ -12,10 +12,12 @@ async function sendRecoverySms({ businessId, leadId, to, from, text }) {
       { to, from, text },
       async (err, responseData) => {
         if (err) {
-          console.error('SMS send error:', err);
+          console.error('SMS SEND ERROR:', err);
           reject(err);
           return;
         }
+
+        console.log('SMS SEND RESPONSE:', responseData);
 
         try {
           await prisma.messageLog.create({
@@ -23,16 +25,18 @@ async function sendRecoverySms({ businessId, leadId, to, from, text }) {
               businessId,
               leadId,
               direction: 'outbound',
-              fromNumber: from,
-              toNumber: to,
+              fromNumber: String(from || ''),
+              toNumber: String(to || ''),
               body: text,
               status: 'sent',
               rawPayload: responseData
             }
           });
 
+          console.log('OUTBOUND MESSAGE LOG CREATED');
           resolve(responseData);
         } catch (dbErr) {
+          console.error('MESSAGE LOG DB ERROR:', dbErr);
           reject(dbErr);
         }
       }
