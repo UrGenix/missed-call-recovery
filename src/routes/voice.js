@@ -85,8 +85,8 @@ router.all('/answer', async (req, res) => {
         text: 'Sorry we missed your call. We have sent you a text message now.'
       }
     ]);
-  } catch (error) {
-    console.error(error);
+   } catch (error) {
+    console.error('VOICE ANSWER ERROR:', error);
     return res.json([
       { action: 'talk', text: 'Sorry, something went wrong.' }
     ]);
