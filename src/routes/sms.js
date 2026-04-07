@@ -73,6 +73,8 @@ router.all('/inbound', async (req, res) => {
       }
     });
 
+    console.log('INBOUND MESSAGE LOG CREATED');
+
     await sendBusinessEmail({
       to: business.alertEmail,
       subject: `Customer replied for ${business.name}`,
