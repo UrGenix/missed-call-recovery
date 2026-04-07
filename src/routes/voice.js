@@ -58,13 +58,20 @@ if (!call) {
     }
   });
 }
-    const lead = await prisma.lead.create({
-      data: {
-        businessId: business.id,
-        callId: call.id,
-        callerNumber: from,
-        status: 'new'
-      }
+    let lead = await prisma.lead.findFirst({
+  where: { callId: call.id }
+});
+
+if (!lead) {
+  lead = await prisma.lead.create({
+    data: {
+      businessId: business.id,
+      callId: call.id,
+      callerNumber: from,
+      status: 'new'
+    }
+  });
+}
     });
 
     await sendRecoverySms({
