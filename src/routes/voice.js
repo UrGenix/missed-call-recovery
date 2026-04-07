@@ -42,17 +42,22 @@ router.all('/answer', async (req, res) => {
       ]);
     }
 
-    const call = await prisma.call.create({
-      data: {
-        businessId: business.id,
-        vonageUuid: uuid,
-        callerNumber: from,
-        calledNumber: to,
-        status: 'diverted_to_recovery',
-        rawPayload: payload
-      }
-    });
+   let call = await prisma.call.findFirst({
+  where: { vonageUuid: uuid }
+});
 
+if (!call) {
+  call = await prisma.call.create({
+    data: {
+      businessId: business.id,
+      vonageUuid: uuid,
+      callerNumber: from,
+      calledNumber: to,
+      status: 'diverted_to_recovery',
+      rawPayload: payload
+    }
+  });
+}
     const lead = await prisma.lead.create({
       data: {
         businessId: business.id,
