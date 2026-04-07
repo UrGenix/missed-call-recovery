@@ -7,9 +7,12 @@ const router = express.Router();
 router.all('/inbound', async (req, res) => {
   try {
     const payload = req.method === 'GET' ? req.query : req.body;
-    const to = payload.to;
-    const from = payload.msisdn || payload.from;
+    const rawTo = payload.to || '';
+    const rawFrom = payload.msisdn || payload.from || '';
     const text = payload.text || '';
+
+    const to = String(rawTo).replace(/\D/g, '');
+    const from = String(rawFrom).replace(/\D/g, '');
 
     const business = await prisma.business.findFirst({
       where: {
