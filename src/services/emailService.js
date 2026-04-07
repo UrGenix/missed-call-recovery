@@ -1,9 +1,12 @@
-const { Resend } = require('resend');
+let resend = null;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+if (process.env.RESEND_API_KEY) {
+  const { Resend } = require('resend');
+  resend = new Resend(process.env.RESEND_API_KEY);
+}
 
 async function sendBusinessEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY || !process.env.FROM_EMAIL) {
+  if (!resend || !process.env.FROM_EMAIL) {
     console.log('Email skipped - missing RESEND_API_KEY or FROM_EMAIL');
     return;
   }
