@@ -12,6 +12,8 @@ router.all('/inbound', async (req, res) => {
   try {
     const payload = req.method === 'GET' ? req.query : req.body;
 
+    console.log('RAW SMS INBOUND REQUEST:', payload);
+
     const rawTo = payload.to || '';
     const rawFrom = payload.msisdn || payload.from || '';
     const text = payload.text || '';
@@ -19,10 +21,10 @@ router.all('/inbound', async (req, res) => {
     const to = normaliseNumber(rawTo);
     const from = normaliseNumber(rawFrom);
 
-    console.log('SMS INBOUND PAYLOAD:', payload);
-    console.log('NORMALISED SMS TO:', to, 'FROM:', from);
+    console.log('NORMALISED SMS TO:', to, 'FROM:', from, 'TEXT:', text);
 
     if (!to || !from) {
+      console.log('SMS inbound ignored because to/from missing');
       return res.sendStatus(200);
     }
 
@@ -73,7 +75,7 @@ router.all('/inbound', async (req, res) => {
       }
     });
 
-    console.log('INBOUND MESSAGE LOG CREATED');
+    console.log('INBOUND MESSAGE LOG CREATED FOR LEAD:', lead.id);
 
     await sendBusinessEmail({
       to: business.alertEmail,
