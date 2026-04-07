@@ -13,6 +13,15 @@ router.all('/answer', async (req, res) => {
     const from = payload.from;
     const uuid = payload.uuid;
 
+    if (!to || !from) {
+      return res.json([
+        {
+          action: 'talk',
+          text: 'Webhook is live.'
+        }
+      ]);
+    }
+
     const business = await prisma.business.findFirst({
       where: {
         recoveryNumber: to,
